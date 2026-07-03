@@ -1,50 +1,55 @@
-# Welcome to your Expo app 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+create table transactions (
+ id uuid primary key default gen_random_uuid(),
+ user_id uuid references auth.users not null,
+ merchant text not null,
+ amount numeric not null,
+ category text not null,
+ type text check (type in ('income', 'expense')) not null,
+ created_at timestamptz default now()
+);
+alter table transactions enable row level security;
+create policy "own data" on transactions
+ using (auth.uid() = user_id)
+ with check (auth.uid() = user_id)
 
-## Get started
 
-1. Install dependencies
+ -- Tabla de perfiles, 1 a 1 con auth.users
+create table public.profiles (
+  id uuid references auth.users on delete cascade primary key,
+  full_name varchar(40),
+  phone varchar(12),
+  updated_at timestamptz default now()
+);
 
-   ```bash
-   npm install
-   ```
+-- Row Level Security: cada usuario solo ve/edita su propio perfil
+alter table public.profiles enable row level security;
 
-2. Start the app
+create policy "Usuarios pueden ver su propio perfil"
+  on public.profiles for select
+  using (auth.uid() = id);
 
-   ```bash
-   npx expo start
-   ```
+create policy "Usuarios pueden actualizar su propio perfil"
+  on public.profiles for update
+  using (auth.uid() = id);
 
-In the output, you'll find options to open the app in a
+create policy "Usuarios pueden insertar su propio perfil"
+  on public.profiles for insert
+  with check (auth.uid() = id);
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+-- Trigger: crea el perfil automáticamente cuando alguien se registra
+create function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id, full_name)
+  values (new.id, new.raw_user_meta_data ->> 'full_name');
+  return new;
+end;
+$$;
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
