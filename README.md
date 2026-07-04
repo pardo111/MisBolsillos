@@ -1,55 +1,42 @@
 
-create table transactions (
- id uuid primary key default gen_random_uuid(),
- user_id uuid references auth.users not null,
- merchant text not null,
- amount numeric not null,
- category text not null,
- type text check (type in ('income', 'expense')) not null,
- created_at timestamptz default now()
-);
-alter table transactions enable row level security;
-create policy "own data" on transactions
- using (auth.uid() = user_id)
- with check (auth.uid() = user_id)
+##  Instrucciones de Instalación
+
+Sigue estos pasos para clonar el proyecto y ejecutarlo en tu entorno local:
+
+### 1. Clonar el repositorio
+Primero, clona el repositorio oficial en tu máquina local mediante Git:
+```bash
+git clone https://github.com/pardo111/misbolsillos.git
 
 
- -- Tabla de perfiles, 1 a 1 con auth.users
-create table public.profiles (
-  id uuid references auth.users on delete cascade primary key,
-  full_name varchar(40),
-  phone varchar(12),
-  updated_at timestamptz default now()
-);
+2. Acceder al directorio del proyecto
+Navega dentro de la carpeta del proyecto clonado:
 
--- Row Level Security: cada usuario solo ve/edita su propio perfil
-alter table public.profiles enable row level security;
+Bash
+cd misbolsillos
 
-create policy "Usuarios pueden ver su propio perfil"
-  on public.profiles for select
-  using (auth.uid() = id);
+3. Instalar las dependencias
+Instala todos los paquetes y dependencias necesarias para el funcionamiento del proyecto ejecutando:
 
-create policy "Usuarios pueden actualizar su propio perfil"
-  on public.profiles for update
-  using (auth.uid() = id);
+Bash
+npm i
 
-create policy "Usuarios pueden insertar su propio perfil"
-  on public.profiles for insert
-  with check (auth.uid() = id);
+4. Iniciar la aplicación
+Una vez completada la instalación, puedes levantar el servidor de desarrollo de Expo con el siguiente comando:
 
--- Trigger: crea el perfil automáticamente cuando alguien se registra
-create function public.handle_new_user()
-returns trigger
-language plpgsql  
-security definer set search_path = public
-as $$
-begin
-  insert into public.profiles (id, full_name)
-  values (new.id, new.raw_user_meta_data ->> 'full_name');
-  return new;
-end;
-$$;
+Bash
+npx expo start
+Nota: Puedes escanear el código QR que aparecerá en tu terminal usando la app de Expo Go en tu dispositivo móvil (iOS/Android) o presionar a para abrir un emulador de Android o i para el simulador de iOS.
 
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
+ Configuración y Entorno (.env)
+ Nota importante para la revisión:
+El archivo .env se ha incluido intencionalmente en este repositorio para facilitar el proceso de revisión y evaluación. De esta manera, no es necesario que configures tu propio entorno o proyecto en Supabase, ya que contiene las llaves de acceso listas para conectar directamente con la base de datos de pruebas.
+
+🧪 Cuentas y Perfiles de Prueba
+Para que puedas explorar la aplicación de inmediato y ver el sistema en acción con perfiles predefinidos, puedes utilizar las siguientes credenciales de acceso:
+
+Correo electrónico: pgpp64432@gmail.com
+
+Contraseña: 123456
+
+Este perfil ya cuenta con datos e historiales de prueba cargados para facilitar la navegación por todas las secciones del sistema.
