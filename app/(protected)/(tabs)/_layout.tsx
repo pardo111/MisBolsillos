@@ -1,17 +1,22 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors } from '../../../utils/theme';
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#111',
-        tabBarInactiveTintColor: '#999',
+        tabBarActiveTintColor: '#fff',
+        tabBarInactiveTintColor: '#888',
         tabBarStyle: {
-          height: 60,
-          paddingBottom: 8,
+          height: 60 + insets.bottom,
+          paddingBottom: insets.bottom + 6,
           paddingTop: 6,
+          backgroundColor: colors.textPrimary,
+          borderTopWidth: 0,
         },
       }}
     >
@@ -33,15 +38,16 @@ export default function TabsLayout() {
           ),
         }}
       />
+      
       <Tabs.Screen
         name="transactions"
         options={{
           title: 'Transacciones',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="wallet-outline" size={size} color={color} />
+            <Ionicons name="swap-horizontal-outline" size={size} color={color} />
           ),
         }}
-      />
-    </Tabs>
+      />    </Tabs>
   );
 }
+  

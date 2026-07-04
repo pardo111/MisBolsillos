@@ -1,7 +1,8 @@
 import { useForm, Controller } from 'react-hook-form';
-import { View, TextInput, Text, Pressable, Alert } from 'react-native';
+import { TextInput, Text, Pressable, Alert } from 'react-native';
 import { Link, router } from 'expo-router';
 import { useAuthStore } from '../store/AuthStore';
+import ScreenWrapper from '../components/ScreenWrapper';
 
 type FormData = { email: string; password: string };
 
@@ -21,8 +22,18 @@ export default function Login() {
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 12 }}>
-      <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Iniciar sesión</Text>
+    <ScreenWrapper
+      contentStyle={{
+        flex: 1,
+        justifyContent: 'center',
+        padding: 24,
+        gap: 12,
+        width: '100%',
+        maxWidth: 400,
+        alignSelf: 'center',
+      }}
+    >
+      <Text style={{ fontSize: 24, fontWeight: 'bold', textAlign: 'center' }}>Iniciar sesión</Text>
 
       <Controller
         control={control}
@@ -35,7 +46,13 @@ export default function Login() {
             onChangeText={onChange}
             autoCapitalize="none"
             keyboardType="email-address"
-            style={{ borderWidth: 1, borderRadius: 8, padding: 12 }}
+            editable={!isSubmitting}
+            style={{
+              borderWidth: 1,
+              borderRadius: 8,
+              padding: 12,
+              opacity: isSubmitting ? 0.5 : 1,
+            }}
           />
         )}
       />
@@ -51,7 +68,13 @@ export default function Login() {
             value={value}
             onChangeText={onChange}
             secureTextEntry
-            style={{ borderWidth: 1, borderRadius: 8, padding: 12 }}
+            editable={!isSubmitting}
+            style={{
+              borderWidth: 1,
+              borderRadius: 8,
+              padding: 12,
+              opacity: isSubmitting ? 0.5 : 1,
+            }}
           />
         )}
       />
@@ -60,12 +83,22 @@ export default function Login() {
       <Pressable
         onPress={handleSubmit(onSubmit)}
         disabled={isSubmitting}
-        style={{ backgroundColor: '#111', padding: 14, borderRadius: 8, alignItems: 'center' }}
+        style={{
+          backgroundColor: isSubmitting ? '#555' : '#111',
+          padding: 14,
+          borderRadius: 8,
+          alignItems: 'center',
+        }}
       >
         <Text style={{ color: 'white' }}>{isSubmitting ? 'Entrando...' : 'Entrar'}</Text>
       </Pressable>
 
-      <Link href="/register">¿No tienes cuenta? Regístrate</Link>
-    </View>
+      <Link
+        href="/register"
+        style={{ textAlign: 'center', opacity: isSubmitting ? 0.5 : 1 }}
+      >
+        ¿No tienes cuenta? Regístrate
+      </Link>
+    </ScreenWrapper>
   );
 }

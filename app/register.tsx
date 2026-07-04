@@ -1,9 +1,10 @@
 import { useForm, Controller } from 'react-hook-form';
 import { ScrollView, TextInput, Text, Pressable, Alert } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { useAuthStore } from '../store/AuthStore';
+import ScreenWrapper from '../components/ScreenWrapper';
 
-type FormData = { phone: string, fullName: string; email: string; password: string; confirmPassword: string };
+type FormData = { phone: string; fullName: string; email: string; password: string; confirmPassword: string };
 
 export default function Register() {
     const signUp = useAuthStore((s) => s.signUp);
@@ -18,111 +19,160 @@ export default function Register() {
             Alert.alert('Error al registrar', error);
             return;
         }
-
+        Alert.alert('Cuenta creada', 'Revisa tu correo para confirmar tu cuenta', [
+            { text: 'OK', onPress: () => router.replace('/login') },
+        ]);
     };
 
-
-
     return (
-        <ScrollView style={{ flex: 1 }}
-            contentContainerStyle={{
-                flexGrow: 1,
-                justifyContent: 'center',
-                padding: 24,
-                gap: 12,
-            }}>
-            <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Crear cuenta</Text>
-            <Controller
-                control={control}
-                name="fullName"
-                rules={{ required: 'Nombre requerido' }}
-                render={({ field: { onChange, value } }) => (
-                    <TextInput
-                        placeholder="Nombre completo"
-                        value={value}
-                        onChangeText={onChange}
-                        style={{ borderWidth: 1, borderRadius: 8, padding: 12 }}
-                    />
-                )}
-            />
-            <Controller
-                control={control}
-                name="phone"
-                rules={{ required: 'Teléfono requerido' }}
-                render={({ field: { onChange, value } }) => (
-                    <TextInput
-                        placeholder="Teléfono"
-                        value={value}
-                        onChangeText={onChange}
-                        style={{ borderWidth: 1, borderRadius: 8, padding: 12 }}
-                    />
-                )}
-            />
-            {errors.phone && <Text style={{ color: 'red' }}>{errors.phone.message}</Text>}
-            <Controller
-                control={control}
-                name="email"
-                rules={{
-                    required: 'Email requerido',
-                    pattern: { value: /^\S+@\S+\.\S+$/, message: 'Email inválido' },
+        <ScreenWrapper edges={['top']}>
+            <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={{
+                    flexGrow: 1,
+                    justifyContent: 'center',
+                    padding: 24,
+                    gap: 12,
                 }}
-                render={({ field: { onChange, value } }) => (
-                    <TextInput
-                        placeholder="Email"
-                        value={value}
-                        onChangeText={onChange}
-                        autoCapitalize="none"
-                        keyboardType="email-address"
-                        style={{ borderWidth: 1, borderRadius: 8, padding: 12 }}
-                    />
-                )}
-            />
-            {errors.email && <Text style={{ color: 'red' }}>{errors.email.message}</Text>}
-
-            <Controller
-                control={control}
-                name="password"
-                rules={{ required: 'Contraseña requerida', minLength: { value: 6, message: 'Mínimo 6 caracteres' } }}
-                render={({ field: { onChange, value } }) => (
-                    <TextInput
-                        placeholder="Contraseña"
-                        value={value}
-                        onChangeText={onChange}
-                        secureTextEntry
-                        style={{ borderWidth: 1, borderRadius: 8, padding: 12 }}
-                    />
-                )}
-            />
-            {errors.password && <Text style={{ color: 'red' }}>{errors.password.message}</Text>}
-
-            <Controller
-                control={control}
-                name="confirmPassword"
-                rules={{
-                    required: 'Confirma tu contraseña',
-                    validate: (value) => value === watch('password') || 'Las contraseñas no coinciden',
-                }}
-                render={({ field: { onChange, value } }) => (
-                    <TextInput
-                        placeholder="Confirmar contraseña"
-                        value={value}
-                        onChangeText={onChange}
-                        secureTextEntry
-                        style={{ borderWidth: 1, borderRadius: 8, padding: 12 }}
-                    />
-                )}
-            />
-            {errors.confirmPassword && <Text style={{ color: 'red' }}>{errors.confirmPassword.message}</Text>}
-
-            <Pressable
-                onPress={handleSubmit(onSubmit)}
-                disabled={isSubmitting}
-                style={{ backgroundColor: '#111', padding: 14, borderRadius: 8, alignItems: 'center' }}
             >
-                <Text style={{ color: 'white' }}>{isSubmitting ? 'Creando cuenta...' : 'Registrarme'}</Text>
-            </Pressable>
+                <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Crear cuenta</Text>
 
-            <Link href="/login">¿Ya tienes cuenta? Inicia sesión</Link>
-        </ScrollView>
+                <Controller
+                    control={control}
+                    name="fullName"
+                    rules={{ required: 'Nombre requerido' }}
+                    render={({ field: { onChange, value } }) => (
+                        <TextInput
+                            placeholder="Nombre completo"
+                            value={value}
+                            onChangeText={onChange}
+                            editable={!isSubmitting}
+                            style={{
+                                borderWidth: 1,
+                                borderRadius: 8,
+                                padding: 12,
+                                opacity: isSubmitting ? 0.5 : 1,
+                            }}
+                        />
+                    )}
+                />
+                {errors.fullName && <Text style={{ color: 'red' }}>{errors.fullName.message}</Text>}
+
+                <Controller
+                    control={control}
+                    name="phone"
+                    rules={{ required: 'Teléfono requerido' }}
+                    render={({ field: { onChange, value } }) => (
+                        <TextInput
+                            placeholder="Teléfono"
+                            value={value}
+                            onChangeText={onChange}
+                            editable={!isSubmitting}
+                            keyboardType="phone-pad"
+                            style={{
+                                borderWidth: 1,
+                                borderRadius: 8,
+                                padding: 12,
+                                opacity: isSubmitting ? 0.5 : 1,
+                            }}
+                        />
+                    )}
+                />
+                {errors.phone && <Text style={{ color: 'red' }}>{errors.phone.message}</Text>}
+
+                <Controller
+                    control={control}
+                    name="email"
+                    rules={{
+                        required: 'Email requerido',
+                        pattern: { value: /^\S+@\S+\.\S+$/, message: 'Email inválido' },
+                    }}
+                    render={({ field: { onChange, value } }) => (
+                        <TextInput
+                            placeholder="Email"
+                            value={value}
+                            onChangeText={onChange}
+                            autoCapitalize="none"
+                            keyboardType="email-address"
+                            editable={!isSubmitting}
+                            style={{
+                                borderWidth: 1,
+                                borderRadius: 8,
+                                padding: 12,
+                                opacity: isSubmitting ? 0.5 : 1,
+                            }}
+                        />
+                    )}
+                />
+                {errors.email && <Text style={{ color: 'red' }}>{errors.email.message}</Text>}
+
+                <Controller
+                    control={control}
+                    name="password"
+                    rules={{ required: 'Contraseña requerida', minLength: { value: 6, message: 'Mínimo 6 caracteres' } }}
+                    render={({ field: { onChange, value } }) => (
+                        <TextInput
+                            placeholder="Contraseña"
+                            value={value}
+                            onChangeText={onChange}
+                            secureTextEntry
+                            editable={!isSubmitting}
+                            style={{
+                                borderWidth: 1,
+                                borderRadius: 8,
+                                padding: 12,
+                                opacity: isSubmitting ? 0.5 : 1,
+                            }}
+                        />
+                    )}
+                />
+                {errors.password && <Text style={{ color: 'red' }}>{errors.password.message}</Text>}
+
+                <Controller
+                    control={control}
+                    name="confirmPassword"
+                    rules={{
+                        required: 'Confirma tu contraseña',
+                        validate: (value) => value === watch('password') || 'Las contraseñas no coinciden',
+                    }}
+                    render={({ field: { onChange, value } }) => (
+                        <TextInput
+                            placeholder="Confirmar contraseña"
+                            value={value}
+                            onChangeText={onChange}
+                            secureTextEntry
+                            editable={!isSubmitting}
+                            style={{
+                                borderWidth: 1,
+                                borderRadius: 8,
+                                padding: 12,
+                                opacity: isSubmitting ? 0.5 : 1,
+                            }}
+                        />
+                    )}
+                />
+                {errors.confirmPassword && <Text style={{ color: 'red' }}>{errors.confirmPassword.message}</Text>}
+
+                <Pressable
+                    onPress={handleSubmit(onSubmit)}
+                    disabled={isSubmitting}
+                    style={{
+                        backgroundColor: isSubmitting ? '#555' : '#111',
+                        padding: 14,
+                        borderRadius: 8,
+                        alignItems: 'center',
+                    }}
+                >
+                    <Text style={{ color: 'white' }}>{isSubmitting ? 'Creando cuenta...' : 'Registrarme'}</Text>
+                </Pressable>
+
+                <Link
+                    href="/login"
+                    style={{ textAlign: 'center', opacity: isSubmitting ? 0.5 : 1 }}
+                >
+                    ¿Ya tienes cuenta? Inicia sesión
+                </Link>
+            </ScrollView>
+        </ScreenWrapper>
     );
-}   
+}

@@ -1,19 +1,8 @@
 import { create } from 'zustand';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
+import { Profile, ProfileState } from '@/types/Profile';
+import {showAlert } from '@/utils/alert';
 
-type Profile = {
-  id: string;
-  full_name: string | null;
-  phone: string | null;
-  avatar_url: string | null;
-};
-
-type ProfileState = {
-  profile: Profile | null;
-  isLoading: boolean;
-  fetchProfile: (userId: string) => Promise<void>;
-  updateProfile: (userId: string, updates: Partial<Profile>) => Promise<{ error: string | null }>;
-};
 
 export const useProfileStore = create<ProfileState>((set) => ({
   profile: null,
@@ -34,14 +23,19 @@ export const useProfileStore = create<ProfileState>((set) => ({
   },
 
   updateProfile: async (userId: string, updates: Partial<Profile>) => {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', userId);
+      .eq('id', userId)
+      .select()   // <- clave: pedimos que nos devuelva la fila actualizada
+      .single();  // <- si no hubo match, esto genera un error real (PGRST116)
 
-    if (!error) {
-      set((state) => ({ profile: state.profile ? { ...state.profile, ...updates } : state.profile }));
+    if (error) {
+      return { error: error.message };
     }
-    return { error: error ? error.message : null };
+
+    // Solo actualizamos el estado local con lo que la BD confirmó, no con el input crudo
+    set({ profile: data });
+    return { error: null };
   },
 }));

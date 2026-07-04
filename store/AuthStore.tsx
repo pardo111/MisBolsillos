@@ -1,18 +1,7 @@
+// store/AuthStore.ts
 import { create } from 'zustand';
-import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-
-type AuthState = {
-  session: Session | null;
-  user: User | null;
-  isLoading: boolean;
-  isReady: boolean;
-  connectionMessage: string;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signUp: (email: string, password: string, fullName: string, phone: string) => Promise<{ error: string | null }>;
-  signOut: () => Promise<void>;
-  init: () => void;
-};
+import { AuthState } from '../types/Auth';
 
 export const useAuthStore = create<AuthState>((set) => ({
   session: null,
@@ -21,11 +10,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   isReady: false,
   connectionMessage: '',
 
-  init: () => {
+  init: async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      set({ session, user: session?.user ?? null, isReady: true });
-    });
+    if (error) {
+      console.error('Error obteniendo sesión:', error.message);
+    }
+
+    set({ session, user: session?.user ?? null, isReady: true });
 
     supabase.auth.onAuthStateChange((_event, session) => {
       set({ session, user: session?.user ?? null });
@@ -45,7 +37,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       email,
       password,
       options: {
-        data: { full_name: fullName, phone }, // esto es lo que deberia de leerr el trigger
+        data: { full_name: fullName, phone },
       },
     });
     set({ isLoading: false });

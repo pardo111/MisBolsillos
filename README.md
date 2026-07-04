@@ -40,7 +40,7 @@ create policy "Usuarios pueden insertar su propio perfil"
 -- Trigger: crea el perfil automáticamente cuando alguien se registra
 create function public.handle_new_user()
 returns trigger
-language plpgsql
+language plpgsql  
 security definer set search_path = public
 as $$
 begin
