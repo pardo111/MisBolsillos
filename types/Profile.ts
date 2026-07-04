@@ -10,4 +10,5 @@ export type ProfileState = {
   isLoading: boolean;
   fetchProfile: (userId: string) => Promise<void>;
   updateProfile: (userId: string, updates: Partial<Profile>) => Promise<{ error: string | null }>;
+  clearProfile: () => void;
 };

@@ -1,13 +1,12 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
+import { useAuthStore } from './AuthStore';
+import { useFinanceStore } from './HomeStore';
 
 import type { Transaction, TransactionFilters, TransactionsState } from '@/types/Transaction';
 
-
 const PAGE_SIZE = 5;
 const SELECT_WITH_CATEGORY = '*, categories(category)';
-
- 
 
 function applyFilters(query: any, filters: TransactionFilters) {
   if (filters.search.trim() !== '') {
@@ -28,6 +27,15 @@ function applyFilters(query: any, filters: TransactionFilters) {
   return query;
 }
 
+// Refresca el resumen financiero (Home) tras cualquier cambio en transacciones.
+// No bloquea el flujo si falla: es una actualización "en segundo plano".
+function refreshFinanceSummary() {
+  const userId = useAuthStore.getState().user?.id;
+  if (userId) {
+    useFinanceStore.getState().fetchFinanceData(userId);
+  }
+}
+
 export const useTransactionsStore = create<TransactionsState>((set, get) => ({
   transactions: [],
   isLoading: false,
@@ -43,7 +51,7 @@ export const useTransactionsStore = create<TransactionsState>((set, get) => ({
 
   setFilters: (filters) => {
     set({ filters });
-    get().fetchPage(0); // cualquier cambio de filtro regresa a la página 1
+    get().fetchPage(0);
   },
 
   fetchPage: async (page) => {
@@ -95,7 +103,8 @@ export const useTransactionsStore = create<TransactionsState>((set, get) => ({
     const { error } = await supabase.from('transactions').insert({ ...data, user_id: userId });
     if (error) return { error: error.message };
 
-    await get().fetchPage(0); // vuelve a la página 1 para ver el nuevo registro (orden desc por fecha)
+    await get().fetchPage(0);
+    refreshFinanceSummary(); // <- actualiza el resumen tras insertar
     return { error: null };
   },
 
@@ -103,7 +112,8 @@ export const useTransactionsStore = create<TransactionsState>((set, get) => ({
     const { error } = await supabase.from('transactions').update(data).eq('id', id);
     if (error) return { error: error.message };
 
-    await get().fetchPage(get().page); // recarga la misma página donde estabas
+    await get().fetchPage(get().page);
+    refreshFinanceSummary(); // <- actualiza el resumen tras editar
     return { error: null };
   },
 
@@ -111,13 +121,13 @@ export const useTransactionsStore = create<TransactionsState>((set, get) => ({
     const { error } = await supabase.from('transactions').delete().eq('id', id);
     if (error) return { error: error.message };
 
-    // Si borraste el único registro de la última página, retrocede una página
     const { page, transactions } = get();
     if (transactions.length === 1 && page > 0) {
       await get().fetchPage(page - 1);
     } else {
       await get().fetchPage(page);
     }
+    refreshFinanceSummary(); // <- actualiza el resumen tras borrar
     return { error: null };
   },
 }));

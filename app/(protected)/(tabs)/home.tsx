@@ -1,21 +1,23 @@
 import { useAuthStore } from '../../../store/AuthStore';
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import { useFinanceStore } from '@/store/HomeStore';
-import { useEffect } from 'react';
+import { useCallback } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, StyleSheet, RefreshControl } from 'react-native';
 import { SummaryCard } from '@/components/SummaryCards';
 import { TopCategoryRow } from '@/components/TopCategoryRow';
 import { colors, spacing, radius } from '../../../utils/theme';
-
+import { useFocusEffect } from 'expo-router';
 
 
 export default function Home() {
   const { user, signOut } = useAuthStore();
   const { summary, topCategories, isLoading, error, fetchFinanceData } = useFinanceStore();
 
-  useEffect(() => {
+  useFocusEffect(
+  useCallback(() => {
     if (user?.id) fetchFinanceData(user.id);
-  }, [user?.id]);
+  }, [user?.id])
+);
 
   if (isLoading && !summary) {
     return (

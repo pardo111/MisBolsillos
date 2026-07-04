@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { TextInput, Text, Pressable, Alert, View } from 'react-native';
+import { TextInput, Text, Pressable,   View } from 'react-native';
 import { Link, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../store/AuthStore';
 import ScreenWrapper from '../components/ScreenWrapper';
+import {showAlert} from '../utils/alert';
 
 type FormData = { email: string; password: string };
 
@@ -18,7 +19,7 @@ export default function Login() {
   const onSubmit = async (data: FormData) => {
     const { error } = await signIn(data.email, data.password);
     if (error) {
-      Alert.alert('Error', error);
+      showAlert('Error', error);
       return;
     }
     router.replace('/(protected)/(tabs)/home');

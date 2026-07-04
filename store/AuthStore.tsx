@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { AuthState } from '../types/Auth';
+import { useProfileStore } from './ProfileStore';
 
 export const useAuthStore = create<AuthState>((set) => ({
   session: null,
@@ -46,5 +47,6 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signOut: async () => {
     await supabase.auth.signOut();
+    useProfileStore.getState().clearProfile(); 
   },
 }));

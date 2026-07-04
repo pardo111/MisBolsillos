@@ -1,15 +1,15 @@
+// store/ProfileStore.ts
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import { Profile, ProfileState } from '@/types/Profile';
-import {showAlert } from '@/utils/alert';
-
+import { showAlert } from '@/utils/alert';
 
 export const useProfileStore = create<ProfileState>((set) => ({
   profile: null,
   isLoading: false,
 
   fetchProfile: async (userId: string) => {
-    set({ isLoading: true });
+    set({ isLoading: true, profile: null }); // <- limpia antes de traer los nuevos datos
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -18,6 +18,8 @@ export const useProfileStore = create<ProfileState>((set) => ({
 
     if (!error && data) {
       set({ profile: data });
+    } else if (error) {
+      set({ profile: null }); // <- si falla, no dejamos datos de otro usuario colgados
     }
     set({ isLoading: false });
   },
@@ -27,15 +29,16 @@ export const useProfileStore = create<ProfileState>((set) => ({
       .from('profiles')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', userId)
-      .select()   // <- clave: pedimos que nos devuelva la fila actualizada
-      .single();  // <- si no hubo match, esto genera un error real (PGRST116)
+      .select()
+      .single();
 
     if (error) {
       return { error: error.message };
     }
 
-    // Solo actualizamos el estado local con lo que la BD confirmó, no con el input crudo
     set({ profile: data });
     return { error: null };
   },
+
+  clearProfile: () => set({ profile: null, isLoading: false }), 
 }));

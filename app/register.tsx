@@ -1,12 +1,19 @@
 import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { ScrollView, TextInput, Text, Pressable, Alert, View } from 'react-native';
+import { ScrollView, TextInput, Text, Pressable, View } from 'react-native';
 import { Link, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../store/AuthStore';
+import { showAlert } from '@/utils/alert';
 import ScreenWrapper from '../components/ScreenWrapper';
 
 type FormData = { phone: string; fullName: string; email: string; password: string; confirmPassword: string };
+
+// Detecta emojis y símbolos pictográficos (para bloquearlos en contraseñas, donde sí se permiten otros símbolos), recordando malas experiencias
+const EMOJI_REGEX = /[\p{Extended_Pictographic}\u200d]/u;
+
+// Email estricto: solo caracteres ASCII válidos, sin emojis ni espacios
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 export default function Register() {
     const signUp = useAuthStore((s) => s.signUp);
@@ -20,10 +27,10 @@ export default function Register() {
     const onSubmit = async (data: FormData) => {
         const { error } = await signUp(data.email, data.password, data.fullName, data.phone);
         if (error) {
-            Alert.alert('Error al registrar', error);
+            showAlert('Error al registrar', error);
             return;
         }
-        Alert.alert('Cuenta creada', 'Revisa tu correo para confirmar tu cuenta', [
+        showAlert('Cuenta creada', 'Revisa tu correo para confirmar tu cuenta', [
             { text: 'OK', onPress: () => router.replace('/login') },
         ]);
     };
@@ -49,7 +56,8 @@ export default function Register() {
                         <TextInput
                             placeholder="Nombre completo"
                             value={value}
-                            onChangeText={onChange}
+                            // Solo letras (con acentos/ñ) y espacios; bloquea números, símbolos y emojis
+                            onChangeText={(text) => onChange(text.replace(/[^A-Za-zÀ-ÿñÑ\s]/g, ''))}
                             editable={!isSubmitting}
                             style={{
                                 borderWidth: 1,
@@ -70,7 +78,8 @@ export default function Register() {
                         <TextInput
                             placeholder="Teléfono"
                             value={value}
-                            onChangeText={onChange}
+                            // Solo dígitos; bloquea letras, símbolos y emojis
+                            onChangeText={(text) => onChange(text.replace(/[^0-9]/g, ''))}
                             editable={!isSubmitting}
                             keyboardType="phone-pad"
                             style={{
@@ -89,13 +98,14 @@ export default function Register() {
                     name="email"
                     rules={{
                         required: 'Email requerido',
-                        pattern: { value: /^\S+@\S+\.\S+$/, message: 'Email inválido' },
+                        pattern: { value: EMAIL_REGEX, message: 'Email inválido' },
                     }}
                     render={({ field: { onChange, value } }) => (
                         <TextInput
                             placeholder="Email"
                             value={value}
-                            onChangeText={onChange}
+                            // Bloquea espacios y emojis directamente al escribir; el resto lo valida el pattern
+                            onChangeText={(text) => onChange(text.replace(/\s/g, '').replace(EMOJI_REGEX, ''))}
                             autoCapitalize="none"
                             keyboardType="email-address"
                             editable={!isSubmitting}
@@ -113,13 +123,17 @@ export default function Register() {
                 <Controller
                     control={control}
                     name="password"
-                    rules={{ required: 'Contraseña requerida', minLength: { value: 6, message: 'Mínimo 6 caracteres' } }}
+                    rules={{
+                        required: 'Contraseña requerida',
+                        minLength: { value: 6, message: 'Mínimo 6 caracteres' },
+                        validate: (value) => !EMOJI_REGEX.test(value) || 'No se permiten emojis',
+                    }}
                     render={({ field: { onChange, value } }) => (
                         <View style={{ position: 'relative' }}>
                             <TextInput
                                 placeholder="Contraseña"
                                 value={value}
-                                onChangeText={onChange}
+                                onChangeText={(text) => onChange(text.replace(EMOJI_REGEX, ''))}
                                 secureTextEntry={!showPassword}
                                 editable={!isSubmitting}
                                 style={{
@@ -157,14 +171,17 @@ export default function Register() {
                     name="confirmPassword"
                     rules={{
                         required: 'Confirma tu contraseña',
-                        validate: (value) => value === watch('password') || 'Las contraseñas no coinciden',
+                        validate: (value) => {
+                            if (EMOJI_REGEX.test(value)) return 'No se permiten emojis';
+                            return value === watch('password') || 'Las contraseñas no coinciden';
+                        },
                     }}
                     render={({ field: { onChange, value } }) => (
                         <View style={{ position: 'relative' }}>
                             <TextInput
                                 placeholder="Confirmar contraseña"
                                 value={value}
-                                onChangeText={onChange}
+                                onChangeText={(text) => onChange(text.replace(EMOJI_REGEX, ''))}
                                 secureTextEntry={!showConfirmPassword}
                                 editable={!isSubmitting}
                                 style={{
