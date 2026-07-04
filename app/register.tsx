@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { ScrollView, TextInput, Text, Pressable, Alert } from 'react-native';
+import { ScrollView, TextInput, Text, Pressable, Alert, View } from 'react-native';
 import { Link, router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../store/AuthStore';
 import ScreenWrapper from '../components/ScreenWrapper';
 
@@ -8,6 +10,8 @@ type FormData = { phone: string; fullName: string; email: string; password: stri
 
 export default function Register() {
     const signUp = useAuthStore((s) => s.signUp);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const { control, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
         defaultValues: { phone: '', email: '', password: '', confirmPassword: '', fullName: '' },
@@ -111,19 +115,39 @@ export default function Register() {
                     name="password"
                     rules={{ required: 'Contraseña requerida', minLength: { value: 6, message: 'Mínimo 6 caracteres' } }}
                     render={({ field: { onChange, value } }) => (
-                        <TextInput
-                            placeholder="Contraseña"
-                            value={value}
-                            onChangeText={onChange}
-                            secureTextEntry
-                            editable={!isSubmitting}
-                            style={{
-                                borderWidth: 1,
-                                borderRadius: 8,
-                                padding: 12,
-                                opacity: isSubmitting ? 0.5 : 1,
-                            }}
-                        />
+                        <View style={{ position: 'relative' }}>
+                            <TextInput
+                                placeholder="Contraseña"
+                                value={value}
+                                onChangeText={onChange}
+                                secureTextEntry={!showPassword}
+                                editable={!isSubmitting}
+                                style={{
+                                    borderWidth: 1,
+                                    borderRadius: 8,
+                                    padding: 12,
+                                    paddingRight: 44,
+                                    opacity: isSubmitting ? 0.5 : 1,
+                                }}
+                            />
+                            <Pressable
+                                onPress={() => setShowPassword((prev) => !prev)}
+                                disabled={isSubmitting}
+                                style={{
+                                    position: 'absolute',
+                                    right: 12,
+                                    top: 0,
+                                    bottom: 0,
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                <Ionicons
+                                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                                    size={20}
+                                    color="#666"
+                                />
+                            </Pressable>
+                        </View>
                     )}
                 />
                 {errors.password && <Text style={{ color: 'red' }}>{errors.password.message}</Text>}
@@ -136,19 +160,39 @@ export default function Register() {
                         validate: (value) => value === watch('password') || 'Las contraseñas no coinciden',
                     }}
                     render={({ field: { onChange, value } }) => (
-                        <TextInput
-                            placeholder="Confirmar contraseña"
-                            value={value}
-                            onChangeText={onChange}
-                            secureTextEntry
-                            editable={!isSubmitting}
-                            style={{
-                                borderWidth: 1,
-                                borderRadius: 8,
-                                padding: 12,
-                                opacity: isSubmitting ? 0.5 : 1,
-                            }}
-                        />
+                        <View style={{ position: 'relative' }}>
+                            <TextInput
+                                placeholder="Confirmar contraseña"
+                                value={value}
+                                onChangeText={onChange}
+                                secureTextEntry={!showConfirmPassword}
+                                editable={!isSubmitting}
+                                style={{
+                                    borderWidth: 1,
+                                    borderRadius: 8,
+                                    padding: 12,
+                                    paddingRight: 44,
+                                    opacity: isSubmitting ? 0.5 : 1,
+                                }}
+                            />
+                            <Pressable
+                                onPress={() => setShowConfirmPassword((prev) => !prev)}
+                                disabled={isSubmitting}
+                                style={{
+                                    position: 'absolute',
+                                    right: 12,
+                                    top: 0,
+                                    bottom: 0,
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                <Ionicons
+                                    name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
+                                    size={20}
+                                    color="#666"
+                                />
+                            </Pressable>
+                        </View>
                     )}
                 />
                 {errors.confirmPassword && <Text style={{ color: 'red' }}>{errors.confirmPassword.message}</Text>}

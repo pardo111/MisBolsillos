@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { TextInput, Text, Pressable, Alert } from 'react-native';
+import { TextInput, Text, Pressable, Alert, View } from 'react-native';
 import { Link, router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../store/AuthStore';
 import ScreenWrapper from '../components/ScreenWrapper';
 
@@ -8,6 +10,7 @@ type FormData = { email: string; password: string };
 
 export default function Login() {
   const signIn = useAuthStore((s) => s.signIn);
+  const [showPassword, setShowPassword] = useState(false);
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     defaultValues: { email: '', password: '' },
   });
@@ -63,19 +66,39 @@ export default function Login() {
         name="password"
         rules={{ required: 'Contraseña requerida', minLength: { value: 6, message: 'Mínimo 6 caracteres' } }}
         render={({ field: { onChange, value } }) => (
-          <TextInput
-            placeholder="Contraseña"
-            value={value}
-            onChangeText={onChange}
-            secureTextEntry
-            editable={!isSubmitting}
-            style={{
-              borderWidth: 1,
-              borderRadius: 8,
-              padding: 12,
-              opacity: isSubmitting ? 0.5 : 1,
-            }}
-          />
+          <View style={{ position: 'relative' }}>
+            <TextInput
+              placeholder="Contraseña"
+              value={value}
+              onChangeText={onChange}
+              secureTextEntry={!showPassword}
+              editable={!isSubmitting}
+              style={{
+                borderWidth: 1,
+                borderRadius: 8,
+                padding: 12,
+                paddingRight: 44,
+                opacity: isSubmitting ? 0.5 : 1,
+              }}
+            />
+            <Pressable
+              onPress={() => setShowPassword((prev) => !prev)}
+              disabled={isSubmitting}
+              style={{
+                position: 'absolute',
+                right: 12,
+                top: 0,
+                bottom: 0,
+                justifyContent: 'center',
+              }}
+            >
+              <Ionicons
+                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                size={20}
+                color="#666"
+              />
+            </Pressable>
+          </View>
         )}
       />
       {errors.password && <Text style={{ color: 'red' }}>{errors.password.message}</Text>}
